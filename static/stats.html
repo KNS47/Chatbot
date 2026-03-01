@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Admin Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/admin.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Specific tweaks for dashboard layout to match screenshots */
+        .card-modern {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            background: white;
+            margin-bottom: 20px;
+        }
+        .card-body h6 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #6b7280;
+        }
+        .card-body h3 {
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+<div class="d-flex" id="wrapper">
+
+    <div id="sidebar" class="p-3">
+        <div class="sidebar-brand">
+            <i class="bi bi-building-fill me-2"></i> Admin Panel
+        </div>
+
+        <a href="/admin" class="sidebar-link">
+            <i class="bi bi-folder me-2"></i> จัดการเอกสาร
+        </a>
+
+        <a href="/admin/stats" class="sidebar-link active">
+            <i class="bi bi-bar-chart me-2"></i> สถิติการใช้งาน
+        </a>
+    </div>
+
+    <div class="flex-fill" id="page-content">
+
+        <div class="bg-white shadow-sm p-3 d-flex justify-content-between align-items-center">
+            <button class="btn btn-outline-secondary btn-sm" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <div class="text-end">
+                <strong>Admin User</strong><br>
+                <small class="text-muted">admin@municipality.go.th</small>
+            </div>
+        </div>
+
+        <div class="container-fluid mt-4 p-4">
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card card-modern">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted">คำถามวันนี้</h6>
+                                    <h3 id="totalQuestions" class="mb-0">-</h3>
+                                </div>
+                                <i class="bi bi-chat-dots text-primary fs-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card card-modern">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted">ผู้ใช้งานวันนี้</h6>
+                                    <h3 id="totalUsers" class="mb-0">-</h3>
+                                </div>
+                                <i class="bi bi-people text-success fs-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card card-modern">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-muted">หมวดหมู่ทั้งหมด</h6>
+                                    <h3 id="totalCategories" class="mb-0">-</h3>
+                                </div>
+                                <i class="bi bi-folder text-warning fs-2"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-modern p-3 mb-4">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">วันที่เริ่มต้น</label>
+                        <input type="date" id="startDate" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">วันที่สิ้นสุด</label>
+                        <input type="date" id="endDate" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label text-muted small">หมวดหมู่</label>
+                        <select id="categoryFilter" class="form-select">
+                            <option value="all">ทุกหมวด</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" onclick="loadAll()">
+                            <i class="bi bi-search me-1"></i> ค้นหา
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="card card-modern mb-4">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>จำนวนคำถามรายวัน</h5>
+                            <canvas id="dailyChart" height="120"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card card-modern mb-4">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-pie-chart-fill text-warning me-2"></i>สัดส่วนหมวดหมู่</h5>
+                            <canvas id="categoryChart" height="240"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card card-modern mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="bi bi-people-fill text-success me-2"></i>จำนวนผู้ใช้ต่อวัน</h5>
+                    <canvas id="userChart" height="100"></canvas>
+                </div>
+            </div>
+
+            <div class="card card-modern">
+                <div class="card-body">
+                    <h5 class="mb-3"><i class="bi bi-list-ol text-primary me-2"></i>คำถามที่ถูกถามบ่อย</h5>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0 custom-table">
+                            <thead>
+                                <tr>
+                                    <th>คำถาม</th>
+                                    <th class="text-center">จำนวนครั้ง</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoryTable">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // Theme Colors
+    const THEME_COLOR = '#3b82f6';
+    const THEME_COLOR_LIGHT = 'rgba(59, 130, 246, 0.1)';
+    const SUCCESS_COLOR = '#10b981';
+
+    let trendChart, userChart, catChart;
+
+    async function loadCategoriesList(){
+        const res = await fetch("/analytics/categories-list");
+        const data = await res.json();
+        const select = document.getElementById("categoryFilter");
+        select.innerHTML = '<option value="all">ทุกหมวด</option>';
+        data.forEach(cat => {
+            select.innerHTML += `<option value="${cat}">${cat}</option>`;
+        });
+    }
+
+    function getFilters(){
+        return {
+            start: document.getElementById("startDate").value,
+            end: document.getElementById("endDate").value,
+            category: document.getElementById("categoryFilter").value
+        };
+    }
+
+    async function loadSummary(){
+        const f = getFilters();
+        const query = new URLSearchParams(f).toString();
+        const res = await fetch(`/analytics/summary?${query}`);
+        const data = await res.json();
+
+        document.getElementById("totalCategories").innerText = data.total_categories || "-";
+        document.getElementById("totalQuestions").innerText = data.total_questions || 0;
+        document.getElementById("totalUsers").innerText = data.total_users || 0;
+    }
+
+    async function loadTrend(){
+        const f = getFilters();
+        const query = new URLSearchParams({category: f.category, start: f.start, end: f.end}).toString();
+        const res = await fetch(`/analytics/last7days?${query}`);
+        const data = await res.json();
+
+        if(trendChart) trendChart.destroy();
+
+        trendChart = new Chart(document.getElementById("dailyChart"), {
+            type: "line",
+            data: {
+                labels: data.map(d => d.date),
+                datasets: [{
+                    label: "จำนวนคำถาม",
+                    data: data.map(d => d.count),
+                    borderColor: THEME_COLOR,
+                    backgroundColor: THEME_COLOR_LIGHT,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 3,
+                    pointBackgroundColor: THEME_COLOR
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    async function loadUsersTrend(){
+        const f = getFilters();
+        const query = new URLSearchParams({start: f.start, end: f.end}).toString();
+        const res = await fetch(`/analytics/users?${query}`);
+        const data = await res.json();
+
+        if(userChart) userChart.destroy();
+
+        userChart = new Chart(document.getElementById("userChart"), {
+            type: "bar",
+            data: {
+                labels: data.map(d => d.date),
+                datasets: [{
+                    label: "ผู้ใช้ต่อวัน",
+                    data: data.map(d => d.users),
+                    backgroundColor: SUCCESS_COLOR,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    async function loadTopQuestions(){
+        const f = getFilters();
+        const query = new URLSearchParams({category: f.category, start: f.start, end: f.end}).toString();
+        const res = await fetch(`/analytics/top-questions?${query}`);
+        const data = await res.json();
+
+        const table = document.getElementById("categoryTable");
+        table.innerHTML = "";
+
+        data.forEach(d => {
+            table.innerHTML += `
+                <tr>
+                    <td>${d.question}</td>
+                    <td class="text-center fw-bold">${d.count}</td>
+                </tr>
+            `;
+        });
+    }
+    
+    // Added for category breakdown chart
+    async function loadCategoryChart() {
+        const f = getFilters();
+        const query = new URLSearchParams({start: f.start, end: f.end}).toString();
+        const res = await fetch(`/analytics/category-breakdown?${query}`);
+        const data = await res.json();
+        
+        if(catChart) catChart.destroy();
+        
+        catChart = new Chart(document.getElementById("categoryChart"), {
+            type: "doughnut",
+            data: {
+                labels: data.map(d => d.category),
+                datasets: [{
+                    data: data.map(d => d.count),
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    function loadAll(){
+        loadSummary();
+        loadTrend();
+        loadTopQuestions();
+        loadUsersTrend();
+        loadCategoryChart();
+    }
+
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    // Initialize
+    loadCategoriesList();
+    loadAll();
+
+    // Real-time refresh
+    setInterval(loadAll, 30000); 
+
+</script>
+
+</body>
+</html>

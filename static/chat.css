@@ -1,0 +1,213 @@
+        :root {
+            --primary-color: #2b7cff;
+            --bot-bg: #f1f1f1;
+            --user-bg: #2b7cff;
+            --text-muted: #666;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Mitr", sans-serif;
+            background: #f0f2f5;
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 280px;
+            background: #fff;
+            padding: 15px;
+            border-right: 1px solid #ddd;
+        }
+
+        .card {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .card.green { background: #eafff0; }
+
+        /* --- Chat Area --- */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            font-weight: bold;
+        }
+
+        .chat-header small {
+            display: block;
+            font-size: 12px;
+            color: green;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Messages & Bubbles --- */
+        .message {
+            max-width: 75%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            word-wrap: break-word;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .bot {
+            background: var(--bot-bg);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+
+        .user {
+            background: var(--user-bg);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            opacity: 0.7;
+            display: block;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* --- Typing Indicator (Effect) --- */
+        .loading {
+            background: var(--bot-bg);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            height: 10px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: #999;
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1.4s infinite both;
+        }
+
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes blink {
+            0%, 100% { transform: translateY(0); opacity: .3; }
+            50% { transform: translateY(-5px); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Quick Actions & Forms --- */
+        .toggle-quick { padding: 10px; border-top: 1px solid #eee; }
+        .toggle-quick button { width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 10px;
+            border-top: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .quick-actions button {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .chat-footer {
+            display: flex;
+            padding: 15px;
+            gap: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            padding: 12px 18px;
+            border-radius: 25px;
+            border: 1px solid #ddd;
+            outline: none;
+        }
+
+        .btn-send {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .complaint-form {
+            background: #f9f9f9;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+        }
+
+        .complaint-form input, .complaint-form textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .cookie-banner {
+            position: fixed;
+            bottom: 0; left: 0; width: 100%;
+            background: white;
+            padding: 20px;
+            border-top: 2px solid var(--primary-color);
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .quick-actions { grid-template-columns: 1fr; }
+        }

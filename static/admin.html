@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — ระบบจัดการเอกสาร</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/admin.css">
+
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-brand">
+            <i class="bi bi-building-fill me-2"></i> Admin Panel
+        </div>
+        <a href="/admin" class="sidebar-link active">
+            <i class="bi bi-folder2-open me-2"></i> จัดการเอกสาร
+        </a>
+        <a href="/admin/stats" class="sidebar-link">
+            <i class="bi bi-bar-chart-line me-2"></i> สถิติการใช้งาน
+        </a>
+    </nav>
+
+    <div id="page-content">
+        <header class="topbar d-flex justify-content-between align-items-center">
+            <button class="btn btn-light border" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="text-end">
+                <span class="fw-bold d-block">Admin User</span>
+                <small class="text-muted">admin@municipality.go.th</small>
+            </div>
+        </header>
+
+        <div class="container-fluid p-4">
+            <div class="stat-card">
+                <h4 class="mb-4 text-dark fw-bold">อัปโหลดเอกสารใหม่</h4>
+                <div class="row g-3">
+                    <div class="col-md-5">
+                        <input type="file" class="form-control" id="pdfFile" accept=".pdf">
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="category">
+                            <option value="ระเบียบ">ระเบียบ</option>
+                            <option value="งบประมาณ">งบประมาณ</option>
+                            <option value="ประกาศ">ประกาศ</option>
+                            <option value="ข้อมูลการบริหารงาน">ข้อมูลการบริหารงาน</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-primary w-100" id="uploadBtn" onclick="uploadPDF()">
+                            <i class="bi bi-cloud-arrow-up me-1"></i> อัปโหลด
+                        </button>
+                    </div>
+                </div>
+
+                <div class="progress" id="progressWrapper">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+                <small id="uploadStatus" class="text-muted mt-2 d-block"></small>
+            </div>
+
+            <div class="mt-4">
+                <h4 class="mb-3 text-dark fw-bold">
+                    <i class="bi bi-collection me-2"></i> เอกสารในระบบ
+                </h4>
+                <div class="table-responsive">
+                    <table class="table custom-table">
+                        <thead>
+                            <tr>
+                                <th>ชื่อเอกสาร</th>
+                                <th class="text-center">ประเภท</th>
+                                <th class="text-center">หมวดหมู่</th>
+                                <th class="text-center">สถานะ</th>
+                                <th class="text-end">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pdfList">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </div> </div>
+</div>
+
+<script>
+    // --- ฟังก์ชัน uploadPDF ที่แก้ให้แสดงผลตามความเร็วเน็ตจริง ---
+    async function uploadPDF() {
+        const fileInput = document.getElementById("pdfFile");
+        const category = document.getElementById("category").value;
+        const file = fileInput.files[0];
+        const btn = document.getElementById("uploadBtn");
+        
+        // อ้างอิง Progress Elements ใน HTML ของคุณ
+        const progressWrapper = document.getElementById("progressWrapper");
+        const progressBar = document.getElementById("progressBar");
+        const statusText = document.getElementById("uploadStatus");
+
+        if (!file) { alert("กรุณาเลือกไฟล์"); return; }
+        // ตรวจสอบขนาดไฟล์ (ตัวอย่าง: ไม่เกิน 50MB)
+        if (file.size > 50 * 1024 * 1024) { alert("ไฟล์ใหญ่เกิน 50MB"); return; }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("category", category);
+
+        // UI Setup: แสดง Progress Bar และล็อกปุ่มไม่ให้กดซ้ำ
+        btn.disabled = true;
+        progressWrapper.style.display = "flex";
+        progressBar.style.width = "0%";
+        statusText.textContent = "กำลังอัปโหลด...";
+
+        // ใช้ XMLHttpRequest เพื่อดึงค่า Progress จริง
+        const xhr = new XMLHttpRequest();
+        
+        // --- ส่วนสำคัญ: ดึงค่า Progress จากความเร็วเน็ตจริง ---
+        xhr.upload.addEventListener("progress", (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percent + "%";
+                statusText.textContent = `กำลังอัปโหลด: ${percent}%`;
+                
+                // กรณีถึง 100% แล้ว แต่ยังไม่ขึ้น "เสร็จสิ้น"
+                if (percent === 100) {
+                    statusText.textContent = "กำลังประมวลผลบน Server...";
+                }
+            }
+        });
+
+        // --- ส่วนสำคัญ: เมื่อ Server รับไฟล์เสร็จสิ้น ---
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                // สำเร็จ
+                statusText.className = "text-success mt-2 d-block";
+                statusText.textContent = "✅ อัปโหลดไฟล์เรียบร้อยแล้ว";
+                fileInput.value = ""; // ล้างค่า input
+                loadPDFs(); // โหลดตารางใหม่
+            } else {
+                // ผิดพลาด
+                statusText.className = "text-danger mt-2 d-block";
+                statusText.textContent = "❌ เกิดข้อผิดพลาดในการอัปโหลด";
+            }
+            
+            // ซ่อน Progress Bar หลังจากเสร็จ 3 วินาที
+            setTimeout(() => {
+                progressWrapper.style.display = "none";
+                btn.disabled = false;
+                statusText.textContent = "";
+            }, 3000);
+        };
+
+        xhr.onerror = function() {
+            statusText.className = "text-danger mt-2 d-block";
+            statusText.textContent = "❌ การเชื่อมต่อล้มเหลว";
+            btn.disabled = false;
+        };
+
+        xhr.open("POST", "/upload-pdf");
+        xhr.send(formData);
+    }
+    // --- ฟังก์ชันโหลดรายการไฟล์ ---
+    async function loadPDFs() {
+        const tbody = document.getElementById("pdfList");
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">กำลังโหลดข้อมูล...</td></tr>';
+
+        try {
+            const res = await fetch("/pdfs");
+            const data = await res.json();
+            tbody.innerHTML = "";
+
+            Object.entries(data.files).forEach(([file, category]) => {
+                const ext = file.split('.').pop().toUpperCase();
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-file-earmark-pdf-fill pdf-icon"></i>
+                            <div>
+                                <div class="fw-bold text-dark">${file}</div>
+                                <small class="text-muted">ขนาด: -</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-center"><span class="badge bg-light text-dark border">${ext}</span></td>
+                    <td class="text-center"><span class="text-secondary">${category}</span></td>
+                    <td class="text-center">
+                        <span class="badge badge-active rounded-pill">ใช้งาน</span>
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group">
+                            <button title="ดูไฟล์" class="btn btn-sm btn-outline-primary" onclick="window.open('/pdfs/${file}')">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button title="ดาวน์โหลด" class="btn btn-sm btn-outline-success" onclick="window.location.href='/pdfs/download/${file}'">
+                                <i class="bi bi-download"></i>
+                            </button>
+                            <button title="ลบ" class="btn btn-sm btn-outline-danger" onclick="deletePDF('${file}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">ไม่สามารถโหลดข้อมูลได้</td></tr>';
+        }
+    }
+
+    async function deletePDF(name) {
+        if (!confirm(`ยืนยันการลบไฟล์: ${name}?`)) return;
+        await fetch("/pdfs/" + name, { method: "DELETE" });
+        loadPDFs();
+    }
+
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    // เรียกใช้งานเมื่อโหลดหน้า
+    window.onload = loadPDFs;
+</script>
+
+</body>
+</html>

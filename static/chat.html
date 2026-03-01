@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot เทศบาล</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/chat.css">
+</head>
+<body>
+
+<div class="app">
+    <aside class="sidebar">
+        <h3>เทศบาลตัวอย่าง</h3>
+        <div class="card">
+            <b>ข้อมูลการใช้งาน</b>
+            <p>• เรื่องร้องเรียนทั้งหมด: 1,234</p>
+            <p>• เสร็จสิ้น: 1,189</p>
+        </div>
+        <div class="card green">
+            <b>บริการออนไลน์</b>
+            <p>✓ แจ้งร้องเรียน 24/7</p>
+            <p>✓ ติดตามผลเรียลไทม์</p>
+        </div>
+    </aside>
+
+    <main class="chat-container">
+        <div class="chat-header">
+            💬 แชทบอทเทศบาล
+            <small>ออนไลน์ • พร้อมให้บริการ</small>
+        </div>
+
+        <div class="chat-body" id="chat">
+            </div>
+
+        <div id="complaintForm" class="complaint-form" style="display:none;">
+            <h4>แบบฟอร์มแจ้งเรื่องร้องเรียน</h4>
+            <input id="issue" placeholder="หัวข้อปัญหา *">
+            <input id="location" placeholder="สถานที่เกิดเหตุ">
+            <textarea id="detail" rows="2" placeholder="รายละเอียดเพิ่มเติม"></textarea>
+            <button style="width:100%; background:#28a745; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer;" onclick="submitComplaint()">✅ ส่งเรื่องร้องเรียน</button>
+        </div>
+
+        <div class="toggle-quick">
+            <button onclick="toggleQuick()" id="toggleQuickBtn">⬆ แสดงเมนูด่วน</button>
+        </div>
+
+        <div class="quick-actions" id="quickActions" style="display:none;">
+            <button onclick="toggleForm()">📄 แจ้งเรื่องร้องเรียน</button>
+            <button onclick="quickSend('ขอคำปรึกษา')">❓ ขอคำปรึกษา</button>
+            <button onclick="quickSend('ตรวจสอบสถานะ')">🔍 ตรวจสอบสถานะ</button>
+            <button onclick="quickSend('ติดต่อเทศบาล')">📞 ติดต่อเทศบาล</button>
+        </div>
+
+        <div class="chat-footer">
+            <input id="msg" placeholder="พิมพ์ข้อความ..." onkeydown="if(event.key==='Enter') send()">
+            <button class="btn-send" onclick="send()">➤</button>
+        </div>
+    </main>
+</div>
+
+<div id="cookieBanner" class="cookie-banner" style="display:none;">
+    <div style="max-width: 800px; margin: auto;">
+        <p>เว็บไซต์นี้มีการใช้คุกกี้เพื่อเก็บประวัติการสนทนาของท่าน</p>
+        <div style="text-align: right;">
+            <button onclick="declineCookies()" style="padding:8px 15px; border:none; cursor:pointer;">ปฏิเสธ</button>
+            <button onclick="acceptCookies()" style="padding:8px 15px; background:var(--primary-color); color:white; border:none; border-radius:5px; cursor:pointer; margin-left:10px;">ยินยอม</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const chat = document.getElementById("chat");
+
+    // --- Helpers ---
+    function getNow() {
+        return new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function addMessage(text, sender) {
+        const div = document.createElement("div");
+        div.className = `message ${sender}`;
+        div.innerHTML = `
+            <div>${text}</div>
+            <span class="msg-time">${getNow()}</span>
+        `;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function showTypingEffect() {
+        const loader = document.createElement("div");
+        loader.className = "message bot loading";
+        loader.id = "typing-loader";
+        loader.innerHTML = `
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+        `;
+        chat.appendChild(loader);
+        chat.scrollTop = chat.scrollHeight;
+        return loader;
+    }
+
+    // --- Core Functions ---
+    async function handleChatRequest(text) {
+        const consent = localStorage.getItem("chat_cookie_consent");
+        if (consent !== "accepted") {
+            addMessage("กรุณายินยอมการใช้คุกกี้ก่อนเริ่มสนทนาค่ะ", "bot");
+            return;
+        }
+
+        const loader = showTypingEffect();
+
+        try {
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text })
+            });
+            const data = await res.json();
+            loader.remove();
+            addMessage(data.answer, "bot");
+        } catch (e) {
+            loader.remove();
+            addMessage("ขออภัยค่ะ ระบบขัดข้องชั่วคราว", "bot");
+        }
+    }
+
+    function send() {
+        const input = document.getElementById("msg");
+        const text = input.value.trim();
+        if (!text) return;
+        addMessage(text, "user");
+        input.value = "";
+        handleChatRequest(text);
+    }
+
+    function quickSend(text) {
+        addMessage(text, "user");
+        handleChatRequest(text);
+    }
+
+    // --- UI Toggles ---
+    function toggleQuick() {
+        const qa = document.getElementById("quickActions");
+        const btn = document.getElementById("toggleQuickBtn");
+        const isOpen = qa.style.display === "grid";
+        qa.style.display = isOpen ? "none" : "grid";
+        btn.innerHTML = isOpen ? "⬆ แสดงเมนูด่วน" : "⬇ ซ่อนเมนูด่วน";
+    }
+
+    function toggleForm() {
+        const f = document.getElementById("complaintForm");
+        f.style.display = f.style.display === "none" ? "block" : "none";
+    }
+
+    async function submitComplaint() {
+        const issue = document.getElementById("issue").value;
+        if(!issue) { alert("กรุณาระบุหัวข้อ"); return; }
+        
+        // Mocking submit
+        addMessage("กำลังส่งเรื่องร้องเรียน...", "bot");
+        setTimeout(() => {
+            addMessage("✅ รับเรื่องร้องเรียนเรียบร้อยแล้วค่ะ เจ้าหน้าที่จะดำเนินการตรวจสอบโดยเร็ว", "bot");
+            toggleForm();
+            document.getElementById("issue").value = "";
+        }, 1500);
+    }
+
+    // --- Consent Logic ---
+    function checkCookieConsent() {
+        if (!localStorage.getItem("chat_cookie_consent")) {
+            document.getElementById("cookieBanner").style.display = "block";
+        }
+    }
+    function acceptCookies() {
+        localStorage.setItem("chat_cookie_consent", "accepted");
+        document.getElementById("cookieBanner").style.display = "none";
+    }
+    function declineCookies() {
+        localStorage.setItem("chat_cookie_consent", "declined");
+        document.getElementById("cookieBanner").style.display = "none";
+    }
+
+    // Initialize
+    window.onload = () => {
+        checkCookieConsent();
+        addMessage("สวัสดีค่ะ ยินดีต้อนรับสู่ระบบแชทบอทเทศบาล<br>มีอะไรให้ช่วยพิมพ์ได้เลยค่ะ", "bot");
+    };
+</script>
+
+</body>
+</html>

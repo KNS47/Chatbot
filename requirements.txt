@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+pypdf
+google-generativeai
+supabase
+python-dotenv
+slowapi
+itsdangerous
