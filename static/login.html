@@ -583,12 +583,14 @@ async function login() {
 
   try {
     // ส่ง Basic Auth ไปยัง /admin endpoint เพื่อ verify
-    const res = await fetch("/admin", {
-      method: "GET",
-      headers: {
-        "Authorization": "Basic " + btoa(`${username}:${password}`)
-      },
-      redirect: "manual"  // ไม่ follow redirect
+    const form = new FormData();
+    form.append("username", username);
+    form.append("password", password);
+
+    const res = await fetch("/api/login", {
+        method: "POST",
+        body: form,
+        credentials: "include"
     });
 
     if (res.ok || res.status === 200) {

@@ -20,6 +20,7 @@ from dotenv import load_dotenv
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from starlette.middleware.sessions import SessionMiddleware
 
 # -----------------------
 # Load ENV
@@ -54,6 +55,10 @@ def use_key(index):
 # FastAPI Setup
 # -----------------------
 app = FastAPI()
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="SUPER_SECRET_KEY_CHANGE_THIS"
+)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 limiter = Limiter(key_func=get_remote_address)
@@ -76,20 +81,15 @@ app.add_middleware(
 
 security = HTTPBasic(auto_error=False)
 
-def verify_admin(request: Request, credentials: HTTPBasicCredentials = Depends(security)):
-    if credentials:
-        ok_user = secrets.compare_digest(credentials.username.encode(), ADMIN_USER.encode())
-        ok_pass = secrets.compare_digest(credentials.password.encode(), ADMIN_PASS.encode())
-        if ok_user and ok_pass:
-            return credentials.username
+def verify_admin(request: Request):
+    if request.session.get("admin"):
+        return True
 
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
-        # browser → redirect to login page
         raise HTTPException(status_code=302, headers={"Location": "/login"})
-    raise HTTPException(status_code=401, detail="Unauthorized",
-                        headers={"WWW-Authenticate": "Basic realm=\"Admin\""})
 
+    raise HTTPException(status_code=401, detail="Unauthorized")
 # -----------------------
 # Utility
 # -----------------------
@@ -248,6 +248,13 @@ def admin_page():
 def stats_page():
     return FileResponse("static/stats.html")
 
+@app.post("/api/login")
+async def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        request.session["admin"] = username
+        return {"success": True}
+
+    raise HTTPException(status_code=401, detail="Invalid credentials")
 # -----------------------
 # Upload PDF (Admin)
 # -----------------------

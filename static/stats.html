@@ -177,6 +177,18 @@
 </div>
 
 <script>
+
+    function authFetch(url, options = {}) {
+    const auth = sessionStorage.getItem("admin_auth");
+
+    if (!options.headers) options.headers = {};
+
+    if (auth) {
+        options.headers["Authorization"] = "Basic " + auth;
+    }
+
+    return fetch(url, options);
+    }
     // Theme Colors
     const THEME_COLOR = '#3b82f6';
     const THEME_COLOR_LIGHT = 'rgba(59, 130, 246, 0.1)';
@@ -185,7 +197,7 @@
     let trendChart, userChart, catChart;
 
     async function loadCategoriesList(){
-        const res = await fetch("/analytics/categories-list");
+        const res = await authFetch("/analytics/categories-list");
         const data = await res.json();
         const select = document.getElementById("categoryFilter");
         select.innerHTML = '<option value="all">ทุกหมวด</option>';
@@ -205,7 +217,7 @@
     async function loadSummary(){
         const f = getFilters();
         const query = new URLSearchParams(f).toString();
-        const res = await fetch(`/analytics/summary?${query}`);
+        const res = await authFetch(`/analytics/summary?${query}`);
         const data = await res.json();
 
         document.getElementById("totalCategories").innerText = data.total_categories || "-";
@@ -216,7 +228,7 @@
     async function loadTrend(){
         const f = getFilters();
         const query = new URLSearchParams({category: f.category, start: f.start, end: f.end}).toString();
-        const res = await fetch(`/analytics/last7days?${query}`);
+        const res = await authFetch(`/analytics/last7days?${query}`);
         const data = await res.json();
 
         if(trendChart) trendChart.destroy();
@@ -250,7 +262,7 @@
     async function loadUsersTrend(){
         const f = getFilters();
         const query = new URLSearchParams({start: f.start, end: f.end}).toString();
-        const res = await fetch(`/analytics/users?${query}`);
+        const res = await authFetch(`/analytics/users?${query}`);
         const data = await res.json();
 
         if(userChart) userChart.destroy();
@@ -280,7 +292,7 @@
     async function loadTopQuestions(){
         const f = getFilters();
         const query = new URLSearchParams({category: f.category, start: f.start, end: f.end}).toString();
-        const res = await fetch(`/analytics/top-questions?${query}`);
+        const res = await authFetch(`/analytics/top-questions?${query}`);
         const data = await res.json();
 
         const table = document.getElementById("categoryTable");
@@ -300,7 +312,7 @@
     async function loadCategoryChart() {
         const f = getFilters();
         const query = new URLSearchParams({start: f.start, end: f.end}).toString();
-        const res = await fetch(`/analytics/category-breakdown?${query}`);
+        const res = await authFetch(`/analytics/category-breakdown?${query}`);
         const data = await res.json();
         
         if(catChart) catChart.destroy();
