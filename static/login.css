@@ -1,0 +1,376 @@
+
+:root {
+    --bg:        hsl(0, 0%, 100%);
+    --panel:     #ffffff;
+    --border:    rgba(255,255,255,0.07);
+    --accent:    #3b82f6;
+    --accent2:   #60a5fa;
+    --glow:      rgba(59,130,246,0.18);
+    --glow2:     rgba(59,130,246,0.08);
+    --text:      #000000;
+    --text-dim:  #69717c;
+    --text-muted:#475569;
+    --error:     #ef4444;
+    --error-bg:  rgba(239,68,68,0.08);
+    --success:   #22c55e;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+    height: 100%;
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+}
+
+/* ─── ANIMATED GRID BACKGROUND ─── */
+.bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+    linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+    animation: gridDrift 20s linear infinite;
+}
+
+@keyframes gridDrift {
+    0%   { background-position: 0 0; }
+    100% { background-position: 48px 48px; }
+}
+
+/* ─── GLOW ORBS ─── */
+.orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+}
+
+.orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    top: -150px; left: -100px;
+    animation: float1 12s ease-in-out infinite;
+}
+
+.orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%);
+    bottom: -100px; right: -80px;
+    animation: float2 15s ease-in-out infinite;
+}
+
+@keyframes float1 {
+    0%,100% { transform: translate(0,0); }
+    50% { transform: translate(40px, 30px); }
+}
+@keyframes float2 {
+    0%,100% { transform: translate(0,0); }
+    50% { transform: translate(-30px, -20px); }
+}
+
+/* ─── CENTER LAYOUT ─── */
+.scene {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* ─── CARD ─── */
+.card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 44px 40px 40px;
+    box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 32px 64px rgba(0,0,0,0.5),
+    0 0 80px var(--glow2);
+    animation: cardIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+    opacity: 0;
+    transform: translateY(24px);
+}
+
+@keyframes cardIn {
+    to { opacity:1; transform:translateY(0); }
+}
+
+/* ─── HEADER ─── */
+.card-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px; height: 60px;
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    border-radius: 16px;
+    font-size: 26px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 24px rgba(59,130,246,0.3), 0 0 0 1px rgba(255,255,255,0.08);
+    animation: logoGlow 3s ease-in-out infinite;
+}
+
+@keyframes logoGlow {
+    0%,100% { box-shadow: 0 8px 24px rgba(59,130,246,0.3), 0 0 0 1px rgba(255,255,255,0.08); }
+    50%      { box-shadow: 0 8px 32px rgba(59,130,246,0.5), 0 0 0 1px rgba(255,255,255,0.12); }
+}
+
+.card-title {
+    font-family: 'Chakra Petch', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+}
+
+.card-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* ─── FORM ─── */
+.form-group {
+    margin-bottom: 18px;
+}
+
+.form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.input-wrap {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.form-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 42px 12px 42px;
+    font-family: 'Sarabun', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    appearance: none;
+    -webkit-appearance: none; /* รองรับ Safari */
+}
+
+.form-input::placeholder { color: var(--text-muted); }
+
+.form-input:focus {
+    border-color: var(--accent);
+    background: rgba(59,130,246,0.04);
+    box-shadow: 0 0 0 3px var(--glow);
+}
+
+.form-input:focus + .input-icon-right,
+.input-wrap:focus-within .input-icon {
+    color: var(--accent2);
+}
+
+/* Toggle password */
+.toggle-pw {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 16px;
+    padding: 4px;
+    transition: color 0.15s;
+    line-height: 1;
+}
+.toggle-pw:hover { color: var(--accent2); }
+
+/* ─── ERROR ─── */
+.error-box {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    background: var(--error-bg);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 9px;
+    padding: 10px 14px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: var(--error);
+    animation: shake 0.4s ease;
+}
+
+.error-box.visible { display: flex; }
+
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%,60%  { transform: translateX(-6px); }
+    40%,80%  { transform: translateX(6px); }
+}
+
+/* ─── SUBMIT BTN ─── */
+.btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-family: 'Chakra Petch', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-top: 4px;
+    box-shadow: 0 4px 16px rgba(37,99,235,0.35);
+}
+
+.btn-login::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.btn-login:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(37,99,235,0.45);
+}
+.btn-login:hover::before { opacity: 1; }
+.btn-login:active:not(:disabled) { transform: translateY(0); }
+
+.btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Loading spinner inside button */
+.spinner {
+    display: none;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.btn-text { transition: opacity 0.15s; }
+
+.btn-login.loading .btn-text { display: none; }
+.btn-login.loading .spinner { display: block; }
+
+/* ─── DIVIDER ─── */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0 0;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ─── FOOTER INFO ─── */
+.card-footer {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.7;
+}
+
+.card-footer a {
+    color: var(--accent2);
+    text-decoration: none;
+}
+.card-footer a:hover { text-decoration: underline; }
+
+/* ─── ATTEMPT COUNTER ─── */
+.attempt-info {
+    display: none;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 10px;
+}
+.attempt-info.visible { display: block; }
+.attempt-info span { color: var(--error); font-weight: 600; }
+
+/* ─── LOCKOUT ─── */
+.lockout-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(8,12,18,0.92);
+    backdrop-filter: blur(8px);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+}
+.lockout-overlay.visible { display: flex; }
+.lockout-icon { font-size: 48px; }
+.lockout-title {
+    font-family: 'Chakra Petch', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--error);
+}
+.lockout-msg { font-size: 14px; color: var(--text-dim); }
+.lockout-timer {
+    font-family: 'Chakra Petch', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
