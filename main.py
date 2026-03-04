@@ -342,9 +342,52 @@ def delete_pdf(filename: str):
 # -----------------------
 # Chat Endpoint
 # -----------------------
+@app.get("/chat/history")
+async def get_chat_history(session_id: str = Cookie(default=None)):
+    """ดึงประวัติการแชทเพื่อให้รีเฟรชหน้าจอแล้วข้อความไม่หาย"""
+    if not session_id:
+        return {"history": []}
+    
+    # ตรวจสอบว่า session_id ยังมีตัวตนในระบบไหม
+    check = supabase.table("chat_sessions").select("id").eq("id", session_id).execute()
+    if not check.data:
+        return {"history": []}
+
+    # ดึงประวัติข้อความ
+    result = supabase.table("chat_messages") \
+        .select("role, content") \
+        .eq("session_id", session_id) \
+        .order("created_at", desc=False) \
+        .execute()
+    
+    return {"history": result.data}
+
 @app.post("/chat")
 @limiter.limit("20/minute")
 async def chat(request: Request, session_id: str = Cookie(default=None)):
+    now = datetime.utcnow()
+    
+    if session_id:
+        # ดึงข้อความล่าสุดเพื่อเช็คเวลา
+        last_msg = supabase.table("chat_messages") \
+            .select("created_at") \
+            .eq("session_id", session_id) \
+            .order("created_at", desc=True) \
+            .limit(1) \
+            .execute()
+        
+        if last_msg.data:
+            # แปลงเวลาจากฐานข้อมูล (UTC) เป็น Python datetime
+            last_time = datetime.fromisoformat(last_msg.data[0]["created_at"].replace('Z', '+00:00'))
+            # ถ้าทิ้งช่วงคุยเกิน 10 นาที ให้ถือว่า Session หมดอายุ
+            if now - last_time.replace(tzinfo=None) > timedelta(minutes=10):
+                session_id = None
+
+    if not session_id:
+        # สร้าง Session ใหม่
+        session = supabase.table("chat_sessions").insert({}).execute()
+        session_id = session.data[0]["id"]
+        
     try:
         body = await request.json()
         question = body.get("message", "").strip()
@@ -376,7 +419,7 @@ async def chat(request: Request, session_id: str = Cookie(default=None)):
 
         if cache_key in response_cache:
             resp = JSONResponse({"answer": response_cache[cache_key]["answer"]})
-            resp.set_cookie("session_id", session_id, httponly=True, max_age=60 * 60 * 24 * 30)
+            resp.set_cookie("session_id", session_id, httponly=True, samesite="lax")
             return resp
 
         # Save user message
@@ -492,7 +535,7 @@ async def chat(request: Request, session_id: str = Cookie(default=None)):
         }).execute()
 
         resp = JSONResponse({"answer": answer})
-        resp.set_cookie("session_id", session_id, httponly=True, max_age=60 * 60 * 24 * 30)
+        resp.set_cookie("session_id", session_id, httponly=True,samesite="lax")
         return resp
 
     except Exception as e:

@@ -183,10 +183,21 @@
         document.getElementById("cookieBanner").style.display = "none";
     }
 
-    // Initialize
+    // ในไฟล์ chat.html
+    async function loadHistory() {
+        const res = await fetch("/chat/history"); // ต้องสร้าง endpoint นี้ใน main.py ด้วย
+        const data = await res.json();
+        if (data.history) {
+            chat.innerHTML = ""; // ล้างหน้าจอ
+            data.history.forEach(m => {
+                addMessage(m.content, m.role === "user" ? "user" : "bot");
+            });
+        }
+    }
+
     window.onload = () => {
         checkCookieConsent();
-        addMessage("สวัสดีค่ะ ยินดีต้อนรับสู่ระบบแชทบอทเทศบาล<br>มีอะไรให้ช่วยพิมพ์ได้เลยค่ะ", "bot");
+        loadHistory(); // เรียกใช้ตอนโหลดหน้า/รีเฟรช
     };
 </script>
 
